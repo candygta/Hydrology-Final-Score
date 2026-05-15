@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตรวจสอบคะแนนเก็บรายวิชา Hydrology</title>
+    <!-- นำเข้า Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- นำเข้าฟอนต์ภาษาไทย -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- นำเข้า Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- กำหนดค่า Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                        cute: ['Mali', 'cursive'],
+                    },
+                    colors: {
+                        water: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                        },
+                        pastel: {
+                            pink: '#fbcfe8',
+                            purple: '#e9d5ff',
+                            yellow: '#fef08a',
+                            green: '#bbf7d0'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-slow': 'float 8s ease-in-out infinite',
+                        'float-fast': 'float 4s ease-in-out infinite',
+                        'wave': 'wave 15s linear infinite',
+                        'wave-slow': 'wave 20s linear infinite',
+                        'blob': 'blob 7s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        wave: {
+                            '0%': { backgroundPositionX: '0px' },
+                            '100%': { backgroundPositionX: '1000px' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(40px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #fbcfe8 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 1s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(56, 189, 248, 0.8);
+        }
+
+        .wave-bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="M0,50 Q250,100 500,50 T1000,50 L1000,100 L0,100 Z" fill="rgba(255,255,255,0.4)"/></svg>');
+            background-size: 1000px 100px;
+            z-index: 0;
+        }
+
+        .wave-bg-2 {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="M0,50 Q250,0 500,50 T1000,50 L1000,100 L0,100 Z" fill="rgba(255,255,255,0.6)"/></svg>');
+            background-size: 1000px 100px;
+            z-index: 0;
+            animation-direction: reverse;
+        }
+
+        .details-container {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.5s ease-out;
+        }
+
+        .details-container.open {
+            grid-template-rows: 1fr;
+        }
+
+        .details-inner {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="text-slate-700">
+
+    <!-- Background Blobs -->
+    <div
+        class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-water-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob z-0">
+    </div>
+    <div
+        class="fixed top-[20%] right-[-10%] w-96 h-96 bg-pastel-pink rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 z-0">
+    </div>
+    <div
+        class="fixed bottom-[-20%] left-[20%] w-96 h-96 bg-pastel-purple rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000 z-0">
+    </div>
+
+    <!-- Waves -->
+    <div class="wave-bg animate-wave fixed"></div>
+    <div class="wave-bg-2 animate-wave-slow fixed"></div>
+
+    <div class="max-w-5xl mx-auto w-full px-4 py-8 relative z-10 min-h-screen flex flex-col items-center">
+
+        <!-- Header Area -->
+        <header class="text-center mt-6 mb-12 animate-fade-in w-full">
+            <div class="relative inline-block mb-4 group">
+                <!-- Cute Water Mascot SVG -->
+                <svg viewBox="0 0 120 120"
+                    class="w-28 h-28 mx-auto animate-float drop-shadow-2xl transition-transform duration-300 group-hover:scale-110">
+                    <!-- Body -->
+                    <path d="M60 15 C60 15 20 60 20 85 A40 40 0 0 0 100 85 C100 60 60 15 60 15 Z"
+                        fill="url(#water-grad)" />
+                    <defs>
+                        <linearGradient id="water-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#bae6fd" />
+                            <stop offset="100%" stop-color="#38bdf8" />
+                        </linearGradient>
+                    </defs>
+                    <!-- Highlight -->
+                    <path d="M45 35 Q35 50 30 70" stroke="rgba(255,255,255,0.6)" stroke-width="6" fill="none"
+                        stroke-linecap="round" />
+                    <!-- Eyes -->
+                    <circle cx="45" cy="75" r="5" fill="#1e293b" />
+                    <circle cx="75" cy="75" r="5" fill="#1e293b" />
+                    <circle cx="47" cy="73" r="1.5" fill="white" />
+                    <circle cx="77" cy="73" r="1.5" fill="white" />
+                    <!-- Cheeks -->
+                    <ellipse cx="32" cy="80" rx="7" ry="4" fill="#fbcfe8" opacity="0.8" />
+                    <ellipse cx="88" cy="80" rx="7" ry="4" fill="#fbcfe8" opacity="0.8" />
+                    <!-- Smile -->
+                    <path d="M52 83 Q60 90 68 83" stroke="#1e293b" stroke-width="4" fill="none"
+                        stroke-linecap="round" />
+                </svg>
+
+                <!-- Floating clouds around mascot -->
+                <i data-lucide="cloud"
+                    class="absolute -left-8 top-10 text-white w-8 h-8 animate-float-slow opacity-80 drop-shadow-sm"></i>
+                <i data-lucide="cloud"
+                    class="absolute -right-6 top-16 text-white w-10 h-10 animate-float-fast opacity-90 drop-shadow-sm"></i>
+                <i data-lucide="sparkles"
+                    class="absolute -top-2 right-4 text-yellow-300 w-6 h-6 animate-pulse drop-shadow-sm"></i>
+            </div>
+
+            <h1 class="text-4xl md:text-6xl font-cute font-extrabold text-slate-800 mb-4 tracking-tight drop-shadow-md">
+                ระบบคะแนน <span class="text-water-500">Hydrology</span> 💧
+            </h1>
+            <div class="inline-flex items-center gap-2 glass-panel px-6 py-2.5 rounded-full shadow-lg">
+                <i data-lucide="book-marked" class="w-5 h-5 text-water-600"></i>
+                <span class="text-slate-700 font-medium text-lg">รหัสวิชา ENG30 2033 · ภาคเรียนที่ 3/2568</span>
+            </div>
+        </header>
+
+        <!-- Main Search Section -->
+        <div id="searchContainer" class="w-full max-w-2xl transition-all duration-700 ease-in-out transform">
+            <div
+                class="glass-panel p-2 md:p-3 rounded-[2.5rem] flex flex-col md:flex-row gap-3 shadow-2xl backdrop-blur-xl border border-white/60 relative overflow-hidden group">
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-water-100/50 to-pastel-pink/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                </div>
+
+                <div class="relative flex-grow flex items-center bg-white/70 rounded-[2rem] px-6 py-4 shadow-inner">
+                    <i data-lucide="search" class="w-6 h-6 text-water-400 mr-3"></i>
+                    <input type="text" id="searchInput"
+                        class="w-full bg-transparent border-none focus:ring-0 text-xl md:text-2xl font-bold text-slate-700 placeholder-slate-400 uppercase"
+                        placeholder="รหัสนักศึกษา (เช่น B67XXXXX)" autocomplete="off">
+                </div>
+
+                <button id="searchBtn"
+                    class="bg-water-500 hover:bg-water-400 text-white font-cute font-bold text-xl py-4 px-10 rounded-[2rem] shadow-[0_6px_0_#0284c7] hover:shadow-[0_3px_0_#0284c7] hover:translate-y-[3px] active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-2 flex-shrink-0">
+                    ค้นหาข้อมูล <i data-lucide="droplets" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMsg" class="hidden mt-6 text-center">
+                <div
+                    class="inline-flex items-center gap-3 bg-red-100/90 backdrop-blur-md text-red-600 px-6 py-3 rounded-full font-cute font-bold border-2 border-red-200 shadow-lg animate-bounce">
+                    <i data-lucide="frown" class="w-6 h-6"></i>
+                    <span id="errorText" class="text-lg">ไม่พบข้อมูลรหัสนักศึกษาในระบบ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Stats Row (Initially visible, hides or shrinks on search) -->
+        <div id="statsRow"
+            class="grid grid-cols-3 gap-4 md:gap-8 w-full max-w-4xl mt-12 animate-slide-up transition-all duration-500">
+            <div class="glass-card p-6 rounded-[2rem] text-center relative overflow-hidden group">
+                <div
+                    class="absolute -right-4 -top-4 w-16 h-16 bg-pastel-yellow rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500">
+                </div>
+                <i data-lucide="award" class="w-8 h-8 text-yellow-500 mx-auto mb-3 relative z-10"></i>
+                <p class="text-slate-500 font-cute font-bold text-sm mb-1 relative z-10">คะแนนสูงสุด</p>
+                <p class="text-3xl font-black text-slate-800 relative z-10" id="statMax">--</p>
+            </div>
+            <div class="glass-card p-6 rounded-[2rem] text-center relative overflow-hidden group">
+                <div
+                    class="absolute -right-4 -top-4 w-16 h-16 bg-water-200 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500">
+                </div>
+                <i data-lucide="bar-chart-2" class="w-8 h-8 text-water-500 mx-auto mb-3 relative z-10"></i>
+                <p class="text-slate-500 font-cute font-bold text-sm mb-1 relative z-10">คะแนนเฉลี่ย</p>
+                <p class="text-3xl font-black text-slate-800 relative z-10" id="statAvg">--</p>
+            </div>
+            <div class="glass-card p-6 rounded-[2rem] text-center relative overflow-hidden group">
+                <div
+                    class="absolute -right-4 -top-4 w-16 h-16 bg-pastel-green rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500">
+                </div>
+                <i data-lucide="target" class="w-8 h-8 text-emerald-500 mx-auto mb-3 relative z-10"></i>
+                <p class="text-slate-500 font-cute font-bold text-sm mb-1 relative z-10">คะแนนต่ำสุด</p>
+                <p class="text-3xl font-black text-slate-800 relative z-10" id="statMin">--</p>
+            </div>
+        </div>
+
+        <!-- Result Area -->
+        <div id="resultArea" class="hidden w-full max-w-4xl mt-12 mb-20 animate-slide-up"></div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        lucide.createIcons();
+
+        const rawHWData = `ลำดับ	รหัสประจำตัว	ชื่อ-สกุล	HW 1	HW 2	QUIZ 1	CW01	CW02	CW03	HW 3	BN01	CW04	CW05	HW 4	CW06	CW07	รวม	Unnamed: 17
+47.0	B6705770	นายณัฐวุฒิ เนตรทองหลาง	5.0	5	2.5	5.0	2.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	57.5	18.26
+48.0	B6707132	นายธนวัฒน์ กิจครบุรี	5.0	5	5.0	5.0	4.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	62.0	19.69
+49.0	B6707699	นายพิชัยยุทธ น่วมภักดี	2.5	5	5.0	5.0	5.0	5.0	5.0		5.0	4.0	5.0	5.0	5.0	56.5	17.94
+50.0	B6708849	นางสาวปนัดดา ตรีพรม	5.0	5	4.5	5.0	5.0	5.0	5.0			5.0	5.0	5.0	5.0	54.5	17.310000000000002
+51.0	B6708948	นางสาวภัชราภา โพธิ์ชัย	5.0	5	4.75	5.0	5.0	5.0	5.0			5.0	5.0	5.0	5.0	54.75	17.39
+52.0	B6709129	นางสาวภณิดา จุลไธสง	3.0	5	4.75		5.0	5.0			5.0	5.0	5.0	5.0	5.0	47.75	15.16
+53.0	B6709501	นายพัฒนศักดิ์ ทองปาน	3.0	5	5.0	5.0	5.0	5.0	5.0			5.0	5.0	5.0	5.0	53.0	16.830000000000002
+54.0	B6709860	นายพุฒิพงศ์ ยอดยิ่งยงค์	5.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	63.0	20.0
+55.0	B6710217	นายธนกฤต พลหาราช	5.0	5	5.0	5.0	5.0	5.0	5.0		5.0	5.0	5.0	5.0	5.0	60.0	19.05
+56.0	B6710316	นายมานะศักดิ์ แก้วอินตา	5.0	5	5.0	5.0	5.0	5.0	4.5			2.0	3.0	5.0	5.0	49.5	15.72
+57.0	B6710514	นางสาวกัญญารัตน์ เอี่ยมโคกสูง	5.0	5	4.75	5.0	5.0	5.0	5.0			5.0	5.0	5.0	5.0	54.75	17.39
+58.0	B6710644	นายพยัคฆ์ เพ็ชรไธสง	5.0	5	5.0	5.0	5.0	5.0	5.0			5.0	5.0	5.0	5.0	55.0	17.470000000000002
+59.0	B6711047	นางสาวเบญจวรรณ ขำปู่	3.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	61.0	19.37
+60.0	B6711375	นางสาวเพ็ญนภา ศรีสด	3.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0		5.0	56.0	17.78
+61.0	B6711849	นางสาวปราณปรียา ดียิ้ม	5.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	63.0	20.0
+62.0	B6712044	นายธีรภัทร์ ชุดขุนทด	5.0	5	5.0	5.0	2.0	5.0	5.0	3.0	5.0	4.0	5.0	5.0	5.0	59.0	18.740000000000002
+63.0	B6712136	นายชยุตพงศ์ นาชัยเพชร	5.0	5	5.0	5.0	2.0	5.0	4.0	3.0	5.0	4.0	5.0	5.0	5.0	58.0	18.42
+64.0	B6712877	นายสุกฤษฎิ์ นาราษฎร์	5.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	63.0	20.0
+65.0	B6712952	นายเจตินัย บุตรวัง	4.0	5	5.0	5.0	5.0	5.0	4.5	3.0	5.0	5.0	5.0	5.0	5.0	61.5	19.53
+66.0	B6713713	นายรพีภัณ พฤกษชาติ	4.0	5	4.5	5.0	5.0	5.0	5.0		5.0	5.0	5.0	5.0	5.0	58.5	18.580000000000002
+67.0	B6714024	นางสาวธวัลรัตน์ ตามบุญ	5.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	3.0	5.0	5.0	5.0	61.0	19.37
+68.0	B6714345	นางสาวดลนภา บุษดา	4.0	5	3.0	5.0	5.0	5.0	5.0			3.0	3.0	5.0	5.0	48.0	15.24
+69.0	B6714390	นายอนิวัต ใจหาญ	5.0	5	5.0		5.0						5.0			25.0	7.9399999999999995
+70.0	B6714932	นายศุภกิจ พงษ์สวัสดิ์	5.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	63.0	20.0
+71.0	B6716431	นางสาวอริศรา สุขังสูงเนิน	5.0	5	4.75	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	62.75	19.930000000000003
+72.0	B6716875	นายกฤชกร พุ่มจันทร์	5.0	5	4.0	5.0	5.0	2.0				5.0	5.0	5.0	5.0	46.0	14.61
+73.0	B6717865	นายเติมพงศ์ ช้างแก้ว	4.0	5	4.0	5.0		5.0				4.0	3.0	5.0		35.0	11.12
+74.0	B6718008	นายพัชรดนัย บุตรทา	5.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	3.0	5.0	5.0	5.0	61.0	19.37
+75.0	B6718145	นายศรุติ จันทกลิ่น	5.0	5	5.0	5.0	5.0	5.0	5.0			5.0	5.0	5.0	5.0	55.0	17.470000000000002
+76.0	B6718404	นายสุรินทร์ สนิทรักษ์	5.0	5	5.0	5.0	5.0	2.0	5.0			5.0	5.0	5.0	5.0	52.0	16.51
+77.0	B6718466	นายธันวา ภูมะณีย์	5.0	5	5.0	5.0	5.0	5.0	5.0		5.0	5.0	5.0	5.0	5.0	60.0	19.05
+78.0	B6724832	นายมีโชค อินสูนย์	5.0	5	4.75	5.0	5.0	5.0	5.0		5.0	5.0	5.0	5.0	5.0	59.75	18.970000000000002
+79.0	B6726348	นายธิติวุฒิ ปัญญา	5.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	4.0	5.0	5.0	5.0	62.0	19.69
+80.0	B6726515	นายภูมเรศ มาศเลิง	5.0	5	5.0	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	63.0	20.0
+81.0	B6726560	นายปารมีย์ หริ่งกระโทก	3.0	5	4.75	5.0	5.0	5.0	5.0	3.0	5.0			1.0	5.0	46.75	14.85
+82.0	B6726607	นายจิรภาส วศะกุลพฤทธิ์	4.0	4	5.0	5.0	5.0	5.0	4.5				5.0	5.0	5.0	47.5	15.08
+83.0	B6729059	นายณัฐนนท์ นามเดช	4.0	5	4.75	5.0	5.0	5.0	5.0			4.0	5.0	5.0	5.0	52.75	16.75
+84.0	B6731854	นางสาวฑิฆัมพร จันทเล	5.0	5	5.0	5.0	5.0	5.0	4.0	3.0	5.0	3.0	5.0	5.0	5.0	60.0	19.05
+85.0	B6732486	นายปิยะ สีลา	5.0	5	4.75	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	62.75	19.930000000000003
+86.0	B6733124	นางสาวปวีณ์นุช รอบรู้	5.0	5	4.75	5.0	5.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	5.0	62.75	19.930000000000003
+87.0	B6733414	นายสุวิจักขณ์ คำจุมจัง	5.0	5	5.0	5.0	5.0	5.0	5.0		5.0	5.0	5.0		5.0	55.0	17.470000000000002
+88.0	B6737221	นายสุรเชษฐ์ ดวงโสภา	3.0	5			5.0		2.0	3.0	4.0			5.0	5.0	32.0	10.16
+89.0	B6742638	นางสาวฝาดีล๊ะ ต่วนมะ	3.0	5	5.0	5.0	5.0		5.0	3.0	5.0	5.0	5.0	5.0	5.0	56.0	17.78
+90.0	B6742751	นางสาวทรรศนันท์ พุทธเสน	3.0	5	5.0	5.0	5.0	5.0	4.5			5.0	5.0	5.0	5.0	52.5	16.67
+91.0	B6742898	นางสาวศศิวิมล ลาดใจ	3.0	5	5.0	5.0	5.0	5.0		3.0	5.0	5.0	5.0	5.0		51.0	16.200000000000003
+92.0	B6747114	นางสาวปิยธิดา เมล์พ่วง	3.0	5	5.0	5.0	5.0		5.0	3.0	5.0	3.0	5.0	5.0	5.0	54.0	17.150000000000002
+93.0	B6747138	นางสาวพิรดา ช่างไม้	5.0	5	5.0	5.0	5.0	5.0	2.0			4.0	5.0	5.0	5.0	51.0	16.200000000000003
+94.0	B6747435	นายอวิรุทธิ์ แสงแก้ว	4.0	5	5.0	5.0	2.0	5.0	5.0	3.0	5.0	5.0	5.0	5.0	4.0	58.0	18.42`;
+        const rawProjectData = `ลำดับ	รหัสประจำตัว	ชื่อ-สกุล	คะแนน	ส่งช้า	คะแนนที่ได้
+47.0	B6705770	นายณัฐวุฒิ เนตรทองหลาง	5.0		8.0
+48.0	B6707132	นายธนวัฒน์ กิจครบุรี	9.5		9.5
+49.0	B6707699	นายพิชัยยุทธ น่วมภักดี	9.0	-1.0	8.0
+50.0	B6708849	นางสาวปนัดดา ตรีพรม	8.0	-1.0	7.0
+51.0	B6708948	นางสาวภัชราภา โพธิ์ชัย	7.0		8.0
+52.0	B6709129	นางสาวภณิดา จุลไธสง	7.0	-1.0	6.0
+53.0	B6709501	นายพัฒนศักดิ์ ทองปาน	7.0	-1.0	8.0
+54.0	B6709860	นายพุฒิพงศ์ ยอดยิ่งยงค์	8.0	-1.0	7.0
+55.0	B6710217	นายธนกฤต พลหาราช	10.0	-0.5	9.5
+56.0	B6710316	นายมานะศักดิ์ แก้วอินตา	8.5		8.5
+57.0	B6710514	นางสาวกัญญารัตน์ เอี่ยมโคกสูง	4.5		8.0
+58.0	B6710644	นายพยัคฆ์ เพ็ชรไธสง	9.5		9.5
+59.0	B6711047	นางสาวเบญจวรรณ ขำปู่	7.0	-1.0	8.0
+60.0	B6711375	นางสาวเพ็ญนภา ศรีสด	8.5	-0.5	8.0
+61.0	B6711849	นางสาวปราณปรียา ดียิ้ม	7.0		7.0
+62.0	B6712044	นายธีรภัทร์ ชุดขุนทด	9.5		9.5
+63.0	B6712136	นายชยุตพงศ์ นาชัยเพชร	9.5		9.5
+64.0	B6712877	นายสุกฤษฎิ์ นาราษฎร์	9.0	-1.0	8.0
+65.0	B6712952	นายเจตินัย บุตรวัง	8.0		8.0
+66.0	B6713713	นายรพีภัณ พฤกษชาติ	9.0		9.0
+67.0	B6714024	นางสาวธวัลรัตน์ ตามบุญ	7.0	-1.0	8.0
+68.0	B6714345	นางสาวดลนภา บุษดา	9.5		9.5
+69.0	B6714390	นายอนิวัต ใจหาญ	10.0	-1.0	9.0
+70.0	B6714932	นายศุภกิจ พงษ์สวัสดิ์	7.5		7.5
+71.0	B6716431	นางสาวอริศรา สุขังสูงเนิน	5.0		8.0
+72.0	B6716875	นายกฤชกร พุ่มจันทร์	9.5		9.5
+73.0	B6717865	นายเติมพงศ์ ช้างแก้ว	5.0		5.0
+74.0	B6718008	นายพัชรดนัย บุตรทา	9.0	-1.0	8.0
+75.0	B6718145	นายศรุติ จันทกลิ่น	9.5	-0.5	9.0
+76.0	B6718404	นายสุรินทร์ สนิทรักษ์	9.5	-0.5	9.0
+77.0	B6718466	นายธันวา ภูมะณีย์	8.0		8.0
+78.0	B6724832	นายมีโชค อินสูนย์	4.0		4.0
+79.0	B6726348	นายธิติวุฒิ ปัญญา	10.0		10.0
+80.0	B6726515	นายภูมเรศ มาศเลิง	8.0		8.0
+81.0	B6726560	นายปารมีย์ หริ่งกระโทก	9.0		9.0
+82.0	B6726607	นายจิรภาส วศะกุลพฤทธิ์	7.0	-0.5	6.5
+83.0	B6729059	นายณัฐนนท์ นามเดช	9.5		9.5
+84.0	B6731854	นางสาวฑิฆัมพร จันทเล	7.5	-0.5	7.0
+85.0	B6732486	นายปิยะ สีลา	5.5		8.0
+86.0	B6733124	นางสาวปวีณ์นุช รอบรู้	7.5		7.5
+87.0	B6733414	นายสุวิจักขณ์ คำจุมจัง	7.5		7.5
+88.0	B6737221	นายสุรเชษฐ์ ดวงโสภา	5.5		5.5
+89.0	B6742638	นางสาวฝาดีล๊ะ ต่วนมะ	8.5	-1.0	7.5
+90.0	B6742751	นางสาวทรรศนันท์ พุทธเสน	7.5		8.0
+91.0	B6742898	นางสาวศศิวิมล ลาดใจ	7.0	-1.0	8.0
+92.0	B6747114	นางสาวปิยธิดา เมล์พ่วง	7.0	-0.5	8.0
+93.0	B6747138	นางสาวพิรดา ช่างไม้	5.5		8.0
+94.0	B6747435	นายอวิรุทธิ์ แสงแก้ว	9.0	-0.5	8.5`;
+
+        function processData() {
+            const students = {};
+            const hwLines = rawHWData.trim().split('\n');
+            for (let i = 1; i < hwLines.length; i++) {
+                const line = hwLines[i].trim();
+                if (!line) continue;
+                const delimiter = line.includes('\t') ? '\t' : ',';
+                const cols = line.split(delimiter).map(c => c.trim());
+                if (cols.length >= 17 && cols[1]) {
+                    const id = cols[1];
+                    students[id] = {
+                        id: id,
+                        name: cols[2],
+                        details: {
+                            hw1: cols[3], hw2: cols[4], q1: cols[5],
+                            cw1: cols[6], cw2: cols[7], cw3: cols[8],
+                            hw3: cols[9], bn1: cols[10], cw4: cols[11],
+                            cw5: cols[12], hw4: cols[13], cw6: cols[14],
+                            cw7: cols[15], hw_raw_total: cols[16],
+                            proj_raw: '', proj_penalty: ''
+                        },
+                        hw_scaled: parseFloat(cols[17]) || 0,
+                        proj_scaled: 0
+                    };
+                }
+            }
+
+            const projLines = rawProjectData.trim().split('\n');
+            for (let i = 1; i < projLines.length; i++) {
+                const line = projLines[i].trim();
+                if (!line) continue;
+                const delimiter = line.includes('\t') ? '\t' : ',';
+                const cols = line.split(delimiter).map(c => c.trim());
+                if (cols.length >= 6 && cols[1]) {
+                    const id = cols[1];
+                    if (!students[id]) {
+                        students[id] = {
+                            id: id, name: cols[2], hw_scaled: 0, proj_scaled: 0,
+                            details: { hw1: '', hw2: '', q1: '', cw1: '', cw2: '', cw3: '', hw3: '', bn1: '', cw4: '', cw5: '', hw4: '', cw6: '', cw7: '', hw_raw_total: '', proj_raw: '', proj_penalty: '' }
+                        };
+                    }
+                    students[id].details.proj_raw = cols[3];
+                    students[id].details.proj_penalty = cols[4];
+                    students[id].proj_scaled = parseFloat(cols[5]) || 0;
+                }
+            }
+
+            return Object.values(students).map(student => ({
+                ...student,
+                total: student.hw_scaled + student.proj_scaled
+            }));
+        }
+
+        const processedData = processData();
+
+        function initStats() {
+            if (processedData.length === 0) return;
+            const totals = processedData.map(s => s.total);
+            document.getElementById('statMax').textContent = Math.max(...totals).toFixed(2);
+            document.getElementById('statMin').textContent = Math.min(...totals).toFixed(2);
+            document.getElementById('statAvg').textContent = (totals.reduce((sum, val) => sum + val, 0) / totals.length).toFixed(2);
+        }
+
+        function toggleDetails() {
+            const container = document.getElementById('detailsContainer');
+            const icon = document.getElementById('toggleIcon');
+            const text = document.getElementById('toggleText');
+
+            if (container.classList.contains('open')) {
+                container.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+                text.textContent = 'แสดงรายละเอียดคะแนน 🔍';
+            } else {
+                container.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+                text.textContent = 'ซ่อนรายละเอียด';
+            }
+        }
+
+        function createScoreItem(label, score, max = '') {
+            const val = (score !== null && score !== undefined && score !== '') ? score : '-';
+            const maxStr = max ? `<span class="text-xs text-slate-500 font-medium ml-1">(เต็ม ${max})</span>` : '';
+            return `
+                <div class="flex justify-between items-center py-2.5 border-b border-white/50 last:border-0 hover:bg-white/40 px-3 rounded-lg transition-colors">
+                    <span class="text-slate-600 font-medium flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-water-400"></i> ${label}
+                    </span>
+                    <span class="font-bold text-slate-800 bg-white/60 px-3 py-1 rounded-full shadow-sm">${val} ${maxStr}</span>
+                </div>
+            `;
+        }
+
+        function getProgressCircle(value, max, colorClass, size = 120) {
+            const radius = 45;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - ((value / max) * circumference);
+            return `
+                <div class="relative inline-flex items-center justify-center">
+                    <svg class="transform -rotate-90 w-32 h-32">
+                        <circle cx="64" cy="64" r="45" stroke="currentColor" stroke-width="8" fill="transparent" class="text-white/50" />
+                        <circle cx="64" cy="64" r="45" stroke="currentColor" stroke-width="8" fill="transparent" 
+                            class="${colorClass} progress-ring__circle drop-shadow-md" 
+                            stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round" />
+                    </svg>
+                    <div class="absolute flex flex-col items-center justify-center">
+                        <span class="text-3xl font-black text-slate-700">${value.toFixed(1)}</span>
+                        <span class="text-xs font-bold text-slate-500 mt-1">เต็ม ${max}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showStudentResult(student) {
+            const resultArea = document.getElementById('resultArea');
+            const d = student.details;
+
+            const totalMax = 30;
+            const pct = (student.total / totalMax) * 100;
+
+            let statusConfig = {
+                bg: 'bg-gradient-to-br from-water-300 to-water-500',
+                light: 'bg-water-50',
+                text: 'text-water-700',
+                icon: 'smile',
+                msg: 'ผลการประเมินอยู่ในเกณฑ์มาตรฐาน'
+            };
+
+            if (pct >= 80) {
+                statusConfig = {
+                    bg: 'bg-gradient-to-br from-emerald-300 to-emerald-500',
+                    light: 'bg-emerald-50',
+                    text: 'text-emerald-700',
+                    icon: 'star',
+                    msg: 'ผลการประเมินอยู่ในเกณฑ์ดีเยี่ยม'
+                };
+            } else if (pct < 50) {
+                statusConfig = {
+                    bg: 'bg-gradient-to-br from-orange-300 to-orange-500',
+                    light: 'bg-orange-50',
+                    text: 'text-orange-700',
+                    icon: 'alert-triangle',
+                    msg: 'ควรปรับปรุงและพัฒนาเพิ่มเติม'
+                };
+            }
+
+            const penaltyHtml = (d.proj_penalty && d.proj_penalty !== '0')
+                ? `<span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-bold shadow-sm">${d.proj_penalty}</span>`
+                : `<span class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-sm font-bold shadow-sm">ไม่มีการหักคะแนน</span>`;
+
+            resultArea.innerHTML = `
+                <div class="glass-panel rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white">
+                    <!-- Top Banner -->
+                    <div class="${statusConfig.bg} p-8 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
+                        
+                        <div class="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                            <div class="w-24 h-24 bg-white rounded-[2rem] rotate-3 shadow-xl flex items-center justify-center p-1">
+                                <div class="w-full h-full bg-slate-50 rounded-[1.5rem] border-2 border-slate-100 flex items-center justify-center">
+                                    <i data-lucide="user" class="w-10 h-10 text-slate-300"></i>
+                                </div>
+                            </div>
+                            <div class="text-center md:text-left flex-grow text-white">
+                                <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full mb-3 border border-white/30">
+                                    <i data-lucide="fingerprint" class="w-4 h-4"></i>
+                                    <span class="font-mono font-bold tracking-wider">${student.id}</span>
+                                </div>
+                                <h2 class="text-3xl md:text-4xl font-cute font-extrabold drop-shadow-md">${student.name}</h2>
+                                <p class="mt-2 text-white/90 font-medium text-lg flex items-center justify-center md:justify-start gap-2">
+                                    <i data-lucide="${statusConfig.icon}" class="w-5 h-5"></i> ${statusConfig.msg}
+                                </p>
+                            </div>
+                            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-4 text-center shadow-lg border-2 border-white transform hover:scale-105 transition-transform cursor-default">
+                                <p class="text-slate-500 font-cute font-bold mb-1">คะแนนรวมสุทธิ</p>
+                                <p class="text-5xl font-black ${statusConfig.text}">${student.total.toFixed(2)}</p>
+                                <p class="text-sm font-bold text-slate-400 mt-1">จาก 30 คะแนน</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 md:p-10 bg-white/40">
+                        <!-- Summary Charts -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div class="glass-card rounded-[2rem] p-6 text-center flex flex-col items-center justify-center relative overflow-hidden">
+                                <div class="absolute -left-6 -bottom-6 w-24 h-24 bg-water-200 rounded-full opacity-30"></div>
+                                <h3 class="font-cute font-bold text-xl text-slate-700 mb-4 flex items-center gap-2">
+                                    <i data-lucide="book-open" class="text-water-500"></i> งานในชั้นเรียน & HW
+                                </h3>
+                                ${getProgressCircle(student.hw_scaled, 20, 'text-water-500')}
+                            </div>
+                            <div class="glass-card rounded-[2rem] p-6 text-center flex flex-col items-center justify-center relative overflow-hidden">
+                                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-purple-200 rounded-full opacity-30"></div>
+                                <h3 class="font-cute font-bold text-xl text-slate-700 mb-4 flex items-center gap-2">
+                                    <i data-lucide="folder-kanban" class="text-purple-500"></i> โครงงาน (Project)
+                                </h3>
+                                ${getProgressCircle(student.proj_scaled, 10, 'text-purple-500')}
+                            </div>
+                        </div>
+
+                        <!-- Toggle Button -->
+                        <div class="text-center mb-6">
+                            <button onclick="toggleDetails()" class="group bg-white hover:bg-water-50 border-2 border-water-200 text-water-600 font-cute font-bold text-lg px-8 py-3 rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2 mx-auto">
+                                <i data-lucide="chevron-down" id="toggleIcon" class="w-5 h-5 transition-transform duration-300 text-water-500"></i>
+                                <span id="toggleText">แสดงรายละเอียดคะแนน 🔍</span>
+                            </button>
+                        </div>
+
+                        <!-- Details Accordion -->
+                        <div id="detailsContainer" class="details-container">
+                            <div class="details-inner">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                    
+                                    <!-- HW Details -->
+                                    <div class="bg-gradient-to-br from-water-50 to-white rounded-[2rem] p-6 border-2 border-water-100 shadow-sm">
+                                        <h4 class="font-cute font-bold text-water-700 text-lg mb-4 flex items-center gap-2">
+                                            <div class="p-1.5 bg-water-100 rounded-lg"><i data-lucide="pencil" class="w-5 h-5"></i></div>
+                                            คะแนนดิบหมวดการบ้าน (HW)
+                                        </h4>
+                                        <div class="space-y-1">
+                                            ${createScoreItem('HW 1', d.hw1, 5)}
+                                            ${createScoreItem('HW 2', d.hw2, 5)}
+                                            ${createScoreItem('HW 3', d.hw3, 5)}
+                                            ${createScoreItem('HW 4', d.hw4, 5)}
+                                            ${createScoreItem('QUIZ 1', d.q1, 5)}
+                                            ${createScoreItem('CW01', d.cw1, 5)}
+                                            ${createScoreItem('CW02', d.cw2, 5)}
+                                            ${createScoreItem('CW03', d.cw3, 5)}
+                                            ${createScoreItem('CW04', d.cw4, 5)}
+                                            ${createScoreItem('CW05', d.cw5, 5)}
+                                            ${createScoreItem('CW06', d.cw6, 5)}
+                                            ${createScoreItem('CW07', d.cw7, 5)}
+                                            ${createScoreItem('คะแนนพิเศษ (BN01)', d.bn1)}
+                                        </div>
+                                        <div class="mt-4 pt-4 border-t-2 border-water-200 flex justify-between items-center px-2">
+                                            <span class="font-cute font-bold text-water-800 text-lg">รวมคะแนนดิบทั้งหมด</span>
+                                            <span class="font-black text-2xl text-water-600">${d.hw_raw_total || '-'}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Project Details -->
+                                    <div class="flex flex-col gap-6">
+                                        <div class="bg-gradient-to-br from-purple-50 to-white rounded-[2rem] p-6 border-2 border-purple-100 shadow-sm">
+                                            <h4 class="font-cute font-bold text-purple-700 text-lg mb-4 flex items-center gap-2">
+                                                <div class="p-1.5 bg-purple-100 rounded-lg"><i data-lucide="presentation" class="w-5 h-5"></i></div>
+                                                รายละเอียดหมวดโครงงาน
+                                            </h4>
+                                            <div class="space-y-1">
+                                                ${createScoreItem('คะแนนดิบที่ประเมินได้', d.proj_raw)}
+                                                <div class="flex justify-between items-center py-2.5 border-b border-white/50 px-3 rounded-lg">
+                                                    <span class="text-slate-600 font-medium flex items-center gap-2">
+                                                        <i data-lucide="clock" class="w-4 h-4 text-orange-400"></i> การหักคะแนนส่งล่าช้า
+                                                    </span>
+                                                    ${penaltyHtml}
+                                                </div>
+                                            </div>
+                                            <div class="mt-4 pt-4 border-t-2 border-purple-200 flex justify-between items-center px-2">
+                                                <span class="font-cute font-bold text-purple-800 text-lg">คะแนนสุทธิโครงงาน</span>
+                                                <span class="font-black text-2xl text-purple-600">${student.proj_scaled.toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Info Note -->
+                                        <div class="bg-blue-50/80 rounded-[2rem] p-6 border border-blue-100 flex gap-4 mt-auto">
+                                            <i data-lucide="info" class="w-6 h-6 text-blue-400 flex-shrink-0 mt-1"></i>
+                                            <p class="text-sm text-slate-600 leading-relaxed">
+                                                <strong class="font-cute text-slate-700">เกณฑ์การคำนวณ:</strong><br>
+                                                หมวดการบ้านและงานในชั้นเรียน จะถูกปรับสัดส่วนเป็น 20 คะแนน และโครงงาน 10 คะแนน 
+                                                รวมเป็นคะแนนเก็บ 30 คะแนน
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+
+            resultArea.classList.remove('hidden');
+            lucide.createIcons();
+
+            setTimeout(() => {
+                resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const resultArea = document.getElementById('resultArea');
+        const searchContainer = document.getElementById('searchContainer');
+        const statsRow = document.getElementById('statsRow');
+
+        function handleSearch() {
+            const query = searchInput.value.trim().toUpperCase();
+
+            errorMsg.classList.add('hidden');
+            resultArea.classList.add('hidden');
+
+            if (!query) {
+                document.getElementById('errorText').textContent = 'กรุณาระบุรหัสนักศึกษา';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            const foundStudent = processedData.find(s => s.id.toUpperCase() === query);
+
+            if (foundStudent) {
+                // Move search bar up
+                searchContainer.classList.add('-translate-y-4');
+                // Hide global stats to focus on result
+                statsRow.style.display = 'none';
+
+                showStudentResult(foundStudent);
+            } else {
+                document.getElementById('errorText').textContent = 'ไม่พบข้อมูลรหัสนักศึกษาในระบบ กรุณาตรวจสอบอีกครั้ง';
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        searchBtn.addEventListener('click', handleSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch();
+        });
+        searchInput.addEventListener('input', (e) => {
+            if (e.target.value === '') {
+                errorMsg.classList.add('hidden');
+                resultArea.classList.add('hidden');
+                searchContainer.classList.remove('-translate-y-4');
+                statsRow.style.display = 'grid';
+            }
+        });
+
+        initStats();
+    </script>
+</body>
+
+</html>
